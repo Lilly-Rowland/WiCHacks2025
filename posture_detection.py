@@ -104,6 +104,14 @@ while cap.isOpened():
             y_offset += 30
 
 
+        # Print and display hip coordinates
+        hip_x, hip_y = hip
+        cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', 
+                (50, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA
+                )
+        
+   
         # Set angle ranges for good catch
         bad_angles = find_bad_catch_angles(angles)
         if bad_angles == []:
