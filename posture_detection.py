@@ -29,6 +29,22 @@ def calculate_angle(a, b, c):
         
     return angle
 
+def find_bad_catch_angles(angles):
+    bad_angles = []
+    if angles['elbow angle'] > 180 or angles['elbow angle'] < 154: #elbow bad
+        bad_angles.append('elbow angle')
+    elif angles['armpit angle'] > 109 or angles['armpit angle'] < 70: #armpit bad
+        bad_angles.append('armpit angle')
+    elif angles['hip angle'] > 35 or angles['hip angle'] < 20:
+        bad_angles.append('hip angle')
+    elif angles['knee angle'] > 65 or angles['knee angle'] < 40:
+        bad_angles.append('knee angle')
+    elif angles['ankle angle'] > 185 or angles['ankle angle'] < 145:
+        bad_angles.append('ankle angle')
+    # elif angles['foot angle'] > 70 or angles['foot angle'] < 23:
+    #     bad_angles.append('foot angle')
+    return bad_angles
+
 # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
 cap = cv2.VideoCapture(0)
 
@@ -87,17 +103,26 @@ while cap.isOpened():
                 )
             y_offset += 30
 
-        if elbow_angle > 160:
+
+        # Set angle ranges for good catch
+        bad_angles = find_bad_catch_angles(angles)
+        if bad_angles == []:
             cv2.putText(frame, 'Good Posture', 
                         (50, 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA
                         )
         else:
             cv2.putText(frame, 'Bad Posture', 
                         (50, 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA
                         )
-
+            y_offset2 = 800
+            for angle_name in bad_angles:
+                cv2.putText(frame, f'{angle_name} INCORRECT', 
+                    (50, y_offset2), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA
+                    )
+                y_offset2 += 30
     # Display the output
     cv2.imshow('Pose Detection', frame)
 
