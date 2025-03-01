@@ -58,12 +58,13 @@ while cap.isOpened():
         wrist = [landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
                  landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y]
 
-        angle = calculate_angle(shoulder, elbow, wrist)
+        elbow_angle = calculate_angle(shoulder, elbow, wrist)
+        
 
-        cv2.putText(frame, str(angle), 
-                    tuple(np.multiply(elbow, [640, 480]).astype(int)), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA
-                    )
+        cv2.putText(frame, f'Angle: {angle:.2f} degrees', 
+                tuple(np.multiply(elbow, [640, 480]).astype(int)), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA
+                )
 
         if angle > 160:
             cv2.putText(frame, 'Good Posture', 
