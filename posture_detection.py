@@ -57,24 +57,45 @@ while cap.isOpened():
                  landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y]
         wrist = [landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
                  landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y]
-
-        elbow_angle = calculate_angle(shoulder, elbow, wrist)
+        hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
+                landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
+        knee = [landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].x,
+                 landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].y]
+        ankle = [landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].x,
+                 landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].y]
+        heel = [landmarks[mp_pose.PoseLandmark.LEFT_HEEL.value].x,
+                 landmarks[mp_pose.PoseLandmark.LEFT_HEEL.value].y]
+        toe = [landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value].x,
+                 landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value].y]
         
 
-        cv2.putText(frame, f'Angle: {angle:.2f} degrees', 
-                tuple(np.multiply(elbow, [640, 480]).astype(int)), 
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA
-                )
+        elbow_angle = calculate_angle(shoulder, elbow, wrist)
+        armpit_angle = calculate_angle(shoulder, elbow, hip)
+        hip_angle = calculate_angle(knee, hip, shoulder)
+        knee_angle = calculate_angle(hip, knee, ankle)
+        ankle_angle = calculate_angle(knee, ankle, heel)
+        foot_angle = calculate_angle(ankle, heel, toe)
 
-        if angle > 160:
+        angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
+ 
+        y_offset = 100
+        for angle_name in angles:
+            angle = angles[angle_name]
+            cv2.putText(frame, f'{angle_name}_Angle: {angle:.2f} degrees', 
+                (50, y_offset), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
+                )
+            y_offset += 30
+
+        if elbow_angle > 160:
             cv2.putText(frame, 'Good Posture', 
                         (50, 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
                         )
         else:
             cv2.putText(frame, 'Bad Posture', 
                         (50, 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
                         )
 
     # Display the output
