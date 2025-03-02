@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import math as m
+from seat_calibration2 import seat_calibration
 
 # Load MediaPipe Pose Landmarker
 mp_pose = mp.solutions.pose
@@ -43,7 +44,7 @@ def find_bad_angles(angles, phase):
         angle_ranges = {
             'elbow angle': (35, 55),
             'armpit angle': (80, 120),
-            'hip angle': (130, 150),
+            'hip angle': (120, 160),
             'knee angle': (150, 175),
             #'ankle angle': (145, 155)
         }
@@ -147,8 +148,15 @@ def process_frame(frame, catch_range_max, finish_range_min):
     return frame
 
 if __name__ == "__main__":
-    catch_range_max = 0.6
-    finish_range_min = 0.7
+
+    calibration_start_time = None
+    previous_hip_x = None
+    catch_calibrated = False
+    finish_calibrated = False
+    catch_x_position = None
+    finish_x_position = None
+    # catch_range_max = 0.6
+    # finish_range_min = 0.7
     cap = cv2.VideoCapture(0)
 
     calibrated = False
@@ -157,7 +165,12 @@ if __name__ == "__main__":
         if not success:
             break
         
-        frame = process_frame(frame, catch_range_max, finish_range_min)
+        if not (catch_calibrated and finish_calibrated):
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position = seat_calibration(
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position
+        )
+        else:
+            frame = process_frame(frame, catch_x_position, finish_x_position)
         
         # Display the output
         cv2.imshow('Pose Detection', frame)
