@@ -37,12 +37,12 @@ def find_bad_angles(angles, phase):
             'elbow angle': (154, 180),
             'armpit angle': (80, 109),
             'hip angle': (27, 40),#(23, 33),
-            'knee angle': (40,60), #(45, 65),
+            'knee angle': (40,60), #(45, 65)
             'ankle angle': (145, 185)
         }
     elif phase == 'finish':
         angle_ranges = {
-            'elbow angle': (35, 55),
+            'elbow angle': (35, 60),
             'armpit angle': (80, 120),
             'hip angle': (110, 160),
             'knee angle': (150, 175),
@@ -183,21 +183,29 @@ if __name__ == "__main__":
     finish_calibrated = False
     catch_x_position = None
     finish_x_position = None
-    catch_calibration_time = None
+    completed_calibration_time = None
+    message = "SIT AT THE CATCH"
     # catch_range_max = 0.6
     # finish_range_min = 0.7
     cap = cv2.VideoCapture(0)
 
-    calibrated = False
+    # Force the webcam to use a higher resolution (change values as needed)
+    cam_width = 1280  # Try 1920 for Full HD
+    cam_height = 720   # Try 1080 for Full HD
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_height)
+
+    calibration_in_process = True
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
             break
         
-        if not (catch_calibrated and finish_calibrated):
-            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time = seat_calibration(
-            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time
-            )
+        if not (catch_calibrated and finish_calibrated) or calibration_in_process:
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message, calibration_in_process = seat_calibration(
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message, calibration_in_process
+        )
+        
         else:
             stroke_length = finish_x_position - catch_x_position
             frame = process_frame(frame, (catch_x_position + stroke_length*.2), (finish_x_position-stroke_length*.2))

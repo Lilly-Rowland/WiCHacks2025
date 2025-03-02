@@ -50,11 +50,7 @@ def find_bad_angles(angles, phase):
     else:
         return bad_angles
 
-    for angle_name, (min_angle, max_angle) in angle_ranges.items():
-        if angles[angle_name] < min_angle or angles[angle_name] > max_angle:
-            bad_angles.append(angle_name)
-    
-    return bad_angles
+
 
 def posture_detection(catch_range_max, finish_range_min):
     # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)

@@ -69,7 +69,7 @@ def is_calibration_delayed(calibration_time):
         return False
     return True
 
-def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message):
+def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message, calibration_in_process):
     # Convert BGR to RGB (MediaPipe requires RGB format)
     image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -101,6 +101,7 @@ def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibr
             message = ""
             completed_calibration_time = time.time()
             calibration_start_time = None
+            calibration_in_process = False
         elif message == "SITTING READY..." and not is_calibration_delayed(completed_calibration_time):
             message = "ROW!"
             print("ROW!")
@@ -113,7 +114,7 @@ def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibr
             
         print_calibration_state(frame, message)
     
-    return frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message
+    return frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message, calibration_in_process
 
 def main():
     calibration_start_time = None
@@ -124,6 +125,7 @@ def main():
     finish_x_position = None
     completed_calibration_time = None
     message = "SIT AT THE CATCH"
+    calibration_in_process = True
 
     # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
     cap = cv2.VideoCapture(0)
@@ -140,8 +142,8 @@ def main():
             break
 
         # CALIBRATES ROWER AND BEGINS ROWING SEQUENCE
-        frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message = seat_calibration(
-            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message
+        frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message, calibration_in_process = seat_calibration(
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message, calibration_in_process
         )
         
         # Display the output
