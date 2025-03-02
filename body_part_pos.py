@@ -56,6 +56,7 @@ def find_bad_angles(angles, phase):
     
     return bad_angles
 
+# compares the x-positions of two landmarks, returns whether one is greater/less than the other
 def compare_pos(l1, l2):
     if l1[0] < l2[0]:
         return  " is in front of " 
@@ -64,6 +65,21 @@ def compare_pos(l1, l2):
     else:
         return " is in the same positon as "
 
+'''NOTES:
+start_pos = wrist is in front of knee, the rest is behind
+end_pos = hip is in front of shoulder and wrist, rest is behind
+[1,1,0,0,0,0]
+[0,0,0,0,0,1]'''
+
+# boolean to check if the position is the start position
+def is_start(score):
+    return score == [0,0,0,0,0,1]
+
+# boolean to check if the position is the finishing position
+def is_end(score):
+    return score == [1,1,0,0,0,0]
+
+# detects a human's posture
 def posture_detection(catch_range_max, finish_range_min):
     # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
     cap = cv2.VideoCapture(0)
@@ -113,24 +129,31 @@ def posture_detection(catch_range_max, finish_range_min):
             foot_angle = calculate_angle(ankle, heel, toe)
 
             # part = ["shoulder", "elbow", "wrist", "hip", "knee", "ankle", "heel", "toe"]
-            part = [("hip", hip), ("shoulder", shoulder), ("wrist", wrist), ("knee", knee), ]
+            part = [("hip", hip), ("shoulder", shoulder), ("wrist", wrist), ("knee", knee)]
 
-        # compare the landmarks' positions for hips, shouders, wrists, and knees, and print it on the video.
-
-        '''NOTES:
-        start_pos = wrist is in front of knee, the rest is behind
-        end_pos = hip is in front of shoulder and wrist, rest is behind'''
+        # compare the landmarks' positions for hips, shouders, wrists, and knees
         cnt = 0
+        score = []
         for p in range(len(part) - 1):
             for a in range(p+1, len(part)):
                 pos = compare_pos(part[p][1], part[a][1])
                 if pos == " is in front of ":
-                    cv2.putText(frame, str(part[p][0]) + pos + str(part[a][0]), (50,50 + cnt*25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+                    score.append(1)
                 else:
-                    cv2.putText(frame, str(part[p][0]) + pos + str(part[a][0]), (50,50 + cnt*25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+                    score.append(0)
                 cnt += 1
-        # cv2.putText(frame, "wrist: " + str(wrist[0]), (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-        # cv2.putText(frame, "knee: " + str(knee[0]), (50,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+
+        # checks if the recorded posture is in the starting or finishing position and prints it on the video
+        if is_start(score):
+            cv2.putText(frame, "Correct Start Posture", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+        else:
+            cv2.putText(frame, "Incorrect Start Posture", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+        
+        if is_end(score):
+            cv2.putText(frame, "Correct End Posture", (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+        else:
+            cv2.putText(frame, "Incorrect End Posture", (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+
         angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
         
         # Display the output
