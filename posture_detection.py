@@ -121,27 +121,27 @@ def posture_detection(catch_range_max, finish_range_min):
 
         angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
     
-            # Print and display hip coordinates
-            hip_x, hip_y = hip
-            cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', 
-                    (50, 700), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
-                    )
+        # Print and display hip coordinates
+        hip_x, hip_y = hip
+        cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', 
+                (50, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
+                )
             
-            if hip_x > catch_range_max:
-                cv2.putText(frame, 'Time to catch', 
-                    (frame.shape[1] - 800, 100), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
-                    )
-                # Set angle ranges for good catch
-                bad_angles = find_bad_angles(angles, 'catch')
-            elif hip_x > finish_range_min:
-                cv2.putText(frame, 'Time to finish', 
-                    (frame.shape[1] // 2 - 300, 150), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
-                    )
-                # Set angle ranges for good catch
-                bad_angles = find_bad_angles(angles, 'finish')
+        if hip_x > catch_range_max:
+            cv2.putText(frame, 'Time to catch', 
+                (frame.shape[1] - 800, 100), 
+                cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
+                )
+            # Set angle ranges for good catch
+            bad_angles = find_bad_angles(angles, 'catch')
+        elif hip_x > finish_range_min:
+            cv2.putText(frame, 'Time to finish', 
+                (frame.shape[1] // 2 - 300, 150), 
+                cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
+                )
+            # Set angle ranges for good catch
+            bad_angles = find_bad_angles(angles, 'finish')
 
 
             if bad_angles == []:
