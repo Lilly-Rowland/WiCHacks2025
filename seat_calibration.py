@@ -72,6 +72,7 @@ def calibrate_catch_or_finish(landmarks, isCatch):
             else:
                 finish_calibrated = True
                 finish_x_position = hip_x
+                calibration_start_time = None
                 return "FNISIH DONE"
     else:
         calibration_start_time = None
@@ -111,13 +112,25 @@ def is_calibration_delayed (calibration_time):
     
 
 
-def ready_to_row():
-    # wait 3 seconds
-    # tell calibration state to stop
-
-    # sitting ready
-    # ROW
-    pass
+def ready_to_row(calibration_time, message):
+  if message == "WAIT":
+    print("C: ", str(calibration_time))
+    if not calibration_time is None:
+      print(time.time() - calibration_time)
+    if calibration_time is None:
+        calibration_time = time.time()
+    elif time.time() - calibration_time >= 5:
+        return "ROW"
+    return "WAIT"
+  elif (message == "ROW"):
+    if not calibration_time is None:
+      print(time.time() - calibration_time)
+    if calibration_time is None:
+        calibration_time = time.time()
+    elif time.time() - calibration_time >= 2:
+        return ""
+    return "ROW"
+      
 
     
 # Force the webcam to use a higher resolution (change values as needed)
@@ -169,13 +182,13 @@ while cap.isOpened():
             message = calibrate_catch_or_finish(landmarks, False)
             if message == "FNISIH DONE":
                 calibration_time = time.time()
-        elif(finish_calibrated and catch_calibrated and not is_calibration_delayed(calibration_time)):
-            message = "READY TO ROW???"
-            
-
-
-        elif(finish_calibrated and catch_calibrated):
-            ready_to_row()
+        elif(finish_calibrated and catch_calibrated and not is_calibration_delayed(calibration_time) and message == "WAIT" or message == "FNISIH DONE"):
+            message = "WAIT"
+            message = ready_to_row(calibration_time, message)
+            if message == "ROW":
+                calibration_time = time.time()
+        elif(message == "ROW"):
+            message = ready_to_row(calibration_time, message)
             
 
         
