@@ -16,6 +16,8 @@ finish_calibrated = False
 catch_x_position = None
 finish_x_position = None
 
+message = "looking for catch"
+
 
 catch_calibration_time = None
 
@@ -65,34 +67,57 @@ def calibrate_catch_or_finish(landmarks, isCatch):
               catch_calibrated = True
               catch_x_position = hip_x
               calibration_start_time = None
+              # CALL TO PRINT 
+              return "CATHCG DONE"
             else:
                 finish_calibrated = True
                 finish_x_position = hip_x
-            return time.time()
+                return "FNISIH DONE"
     else:
         calibration_start_time = None
     previous_hip_x = hip_x
+    return "eeeee"
    
 
 def print_calibration_state(catch_calibrated, finish_calibrated, is_delayed):
   cv2.putText(frame, 'CALIBRATION IN PROCESS', (250, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA)
-  print(finish_calibrated)
-  if(catch_calibrated and is_delayed):
+  if(catch_calibrated and finish_calibrated and is_delayed):
+      cv2.putText(frame, f'FINISH', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
+  elif(catch_calibrated and is_delayed):
      cv2.putText(frame, 'CATCH CALIBRATED', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
   elif(not catch_calibrated):
      cv2.putText(frame, 'SIT AT CATCH', (425, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3, cv2.LINE_AA)
   elif(catch_calibrated and not is_delayed and not finish_calibrated):
      cv2.putText(frame, 'SIT AT FINISH', (425, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3, cv2.LINE_AA)
-  elif(finish_calibrated):
-     cv2.putText(frame, f'FINISH CALIBRATED', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)  
+  elif(finish_calibrated and not is_delayed):
+     cv2.putText(frame, f'FINISH CALIBRATED', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
 
-def get_catch_calibration_delay(catch_calibrated, catch_calibration_time):
+def print_calibration_state_2(message):
+    cv2.putText(frame, 'CALIBRATION IN PROCESS', (250, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA)
+    cv2.putText(frame, f'{message}', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)       
+
+def get_calibration_delay(is_calibrated, calibration_time):
    # calculate a 3 second delay after catch_calibrated is set to true
-   if catch_calibrated:
-      if catch_calibration_time is not None and (time.time() - catch_calibration_time) >= 3:
+   if is_calibrated:
+      if calibration_time is not None and (time.time() - calibration_time) >= 3:
          return False
       return True
    return False
+
+def is_calibration_delayed (calibration_time):
+    if calibration_time is not None and (time.time() - calibration_time) >= 3:
+        return False
+    return True
+    
+
+
+def ready_to_row():
+    # wait 3 seconds
+    # tell calibration state to stop
+
+    # sitting ready
+    # ROW
+    pass
 
     
 # Force the webcam to use a higher resolution (change values as needed)
@@ -124,7 +149,8 @@ while cap.isOpened():
         hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
                 landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
         
-        print_calibration_state(catch_calibrated, finish_calibrated, get_catch_calibration_delay(catch_calibrated, catch_calibration_time))
+        #print_calibration_state(catch_calibrated, finish_calibrated, get_calibration_delay(catch_calibrated, catch_calibration_time))
+        print_calibration_state_2(message)
 
 
         # Print and display hip coordinates
@@ -132,10 +158,25 @@ while cap.isOpened():
         cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         
         if(not catch_calibrated):
-            catch_calibration_time = calibrate_catch_or_finish(landmarks, True)
-            is_delayed = get_catch_calibration_delay(catch_calibrated, catch_calibration_time)
-        elif(not finish_calibrated and not get_catch_calibration_delay(catch_calibrated, catch_calibration_time)):
-            calibrate_catch_or_finish(landmarks, False)
+            message = "CATCHED"
+            message = calibrate_catch_or_finish(landmarks, True)
+            # IF THE MESSAGE IS CATCHED DONE:
+              # DELAY BY 3 SECONDS
+            if message == "CATHCG DONE":
+                calibration_time = time.time()
+        elif(not finish_calibrated and not is_calibration_delayed(calibration_time)):
+            message = "FINISHED"
+            message = calibrate_catch_or_finish(landmarks, False)
+            if message == "FNISIH DONE":
+                calibration_time = time.time()
+        elif(finish_calibrated and catch_calibrated and not is_calibration_delayed(calibration_time)):
+            message = "READY TO ROW???"
+            
+
+
+        elif(finish_calibrated and catch_calibrated):
+            ready_to_row()
+            
 
         
     # Display the output
