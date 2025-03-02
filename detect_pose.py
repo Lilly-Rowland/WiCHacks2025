@@ -147,7 +147,7 @@ def process_frame(frame, catch_range_max, finish_range_min):
         #         )
 
         elif phase == 'stroke': #hip_x <= finish_range_min and hip_x >= catch_range_max:
-            cv2.putText(frame, 'Stroking ;)', 
+            cv2.putText(frame, 'Drive!', 
                 (frame.shape[1] - 800, 100), 
                 cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 8, cv2.LINE_AA, False
                 )
