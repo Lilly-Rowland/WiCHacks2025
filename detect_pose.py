@@ -36,15 +36,15 @@ def find_bad_angles(angles, phase):
         angle_ranges = {
             'elbow angle': (154, 180),
             'armpit angle': (80, 109),
-            'hip angle': (23, 35),
-            'knee angle': (40, 65),
+            'hip angle': (27, 40),#(23, 33),
+            'knee angle': (40,60), #(45, 65),
             'ankle angle': (145, 185)
         }
     elif phase == 'finish':
         angle_ranges = {
             'elbow angle': (35, 55),
             'armpit angle': (80, 120),
-            'hip angle': (120, 160),
+            'hip angle': (110, 160),
             'knee angle': (150, 175),
             #'ankle angle': (145, 155)
         }
@@ -58,10 +58,11 @@ def find_bad_angles(angles, phase):
     return bad_angles
 
 def compare_pos(l1, l2):
-    if l1 <= l2:
-        True
-    elif l1 > l2:
-        False 
+
+    if l1[0] <= l2[0]:
+        return True
+    elif l1[0] > l2[0]:
+        return False 
 
 def process_frame(frame, catch_range_max, finish_range_min):
     # Convert BGR to RGB (MediaPipe requires RGB format)
@@ -102,7 +103,7 @@ def process_frame(frame, catch_range_max, finish_range_min):
         knee_angle = calculate_angle(hip, knee, ankle)
         ankle_angle = calculate_angle(knee, ankle, heel)
         foot_angle = calculate_angle(ankle, heel, toe)
-
+        phase = 'stroke'
         angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
         bad_angles = []
         # Print and display hip coordinates
@@ -112,34 +113,54 @@ def process_frame(frame, catch_range_max, finish_range_min):
                 cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
                 )
         is_wrist_in_front_of_knee = compare_pos(wrist, knee)
-
-        if is_wrist_in_front_of_knee and hip_x < catch_range_max:
+        #print(is_wrist_in_front_of_knee(wrist, knee))
+        if hip_x < catch_range_max:
             cv2.putText(frame, 'Time to catch', 
                 (frame.shape[1] - 800, 100), 
                 cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
                 )
+            phase = 'catching'
+            if is_wrist_in_front_of_knee:
             # Set angle ranges for good catch
-            bad_angles = find_bad_angles(angles, 'catch')
-        elif not is_wrist_in_front_of_knee and hip_x > finish_range_min:
+                phase = 'catch'
+                bad_angles = find_bad_angles(angles, phase)
+        # elif not is_wrist_in_front_of_knee and hip_x > finish_range_min:
+        #     cv2.putText(frame, 'Lean forward and reach arms out', 
+        #         (frame.shape[1] // 2 - 300, 150), 
+        #         cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
+        #         )
+        elif hip_x > finish_range_min:
+            print(hip_x)
+            print(finish_range_min)
             cv2.putText(frame, 'Time to finish', 
                 (frame.shape[1] // 2 - 300, 150), 
                 cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
                 )
+            phase = 'finishing'
+            if not is_wrist_in_front_of_knee:
             # Set angle ranges for good catch
-            bad_angles = find_bad_angles(angles, 'finish')
+                phase = 'finish'
+                bad_angles = find_bad_angles(angles, phase)
+        # elif is_wrist_in_front_of_knee and hip_x > finish_range_min:
+        #     cv2.putText(frame, 'Pull back arms', 
+        #         (frame.shape[1] // 2 - 300, 150), 
+        #         cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
+        #         )
 
-        if hip_x <= finish_range_min and hip_x >= catch_range_max:
+        elif phase == 'stroke': #hip_x <= finish_range_min and hip_x >= catch_range_max:
             cv2.putText(frame, 'Stroking ;)', 
                 (frame.shape[1] // 2 - 300, 150), 
                 cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
                 )
             return frame
-        if bad_angles == []:
+        
+        
+        if (phase == 'catch' or phase == 'finish') and bad_angles == []:
             cv2.putText(frame, 'Good Posture', 
                         (50, 100), 
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_AA
                         )
-        else:
+        elif (phase == 'catch' or phase == 'finish'):
             cv2.putText(frame, 'Bad Posture', 
                         (50, 100), 
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 225), 8, cv2.LINE_AA
@@ -179,7 +200,7 @@ if __name__ == "__main__":
             )
         else:
             stroke_length = finish_x_position - catch_x_position
-            frame = process_frame(frame, (catch_x_position + stroke_length*.1), (finish_x_position-stroke_length*.1))
+            frame = process_frame(frame, (catch_x_position + stroke_length*.2), (finish_x_position-stroke_length*.2))
         
         # Display the output
         cv2.imshow('Pose Detection', frame)
