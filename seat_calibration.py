@@ -16,6 +16,9 @@ finish_calibrated = False
 catch_x_position = None
 finish_x_position = None
 
+
+catch_calibration_time = None
+
 # Initialize Pose Landmarker
 pose = mp_pose.Pose(
     static_image_mode=False,  # False for video input
@@ -49,7 +52,10 @@ def calibrate_catch_or_finish(landmarks, isCatch):
         previous_hip_x = hip_x
 
     difference_threshold = 0.02
-
+    if not calibration_start_time == None:
+      cv2.putText(frame, f'{(time.time() - calibration_start_time):.2f}', (550, 400), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
+    else:
+        cv2.putText(frame, f'TIME: 0.0', (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
     if abs(hip_x - previous_hip_x) < difference_threshold:
         if calibration_start_time is None:
             calibration_start_time = time.time()
@@ -62,11 +68,38 @@ def calibrate_catch_or_finish(landmarks, isCatch):
             else:
                 finish_calibrated = True
                 finish_x_position = hip_x
-            return
+            return time.time()
     else:
         calibration_start_time = None
     previous_hip_x = hip_x
+   
 
+def print_calibration_state(catch_calibrated, finish_calibrated, is_delayed):
+  cv2.putText(frame, 'CALIBRATION IN PROCESS', (250, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA)
+  print(finish_calibrated)
+  if(catch_calibrated and is_delayed):
+     cv2.putText(frame, 'CATCH CALIBRATED', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
+  elif(not catch_calibrated):
+     cv2.putText(frame, 'SIT AT CATCH', (425, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3, cv2.LINE_AA)
+  elif(catch_calibrated and not is_delayed and not finish_calibrated):
+     cv2.putText(frame, 'SIT AT FINISH', (425, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3, cv2.LINE_AA)
+  elif(finish_calibrated):
+     cv2.putText(frame, f'FINISH CALIBRATED', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)  
+
+def get_catch_calibration_delay(catch_calibrated, catch_calibration_time):
+   # calculate a 3 second delay after catch_calibrated is set to true
+   if catch_calibrated:
+      if catch_calibration_time is not None and (time.time() - catch_calibration_time) >= 3:
+         return False
+      return True
+   return False
+
+    
+# Force the webcam to use a higher resolution (change values as needed)
+cam_width = 1280  # Try 1920 for Full HD
+cam_height = 720   # Try 1080 for Full HD
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_height)
 
 while cap.isOpened():
     success, frame = cap.read()
@@ -90,6 +123,8 @@ while cap.isOpened():
 
         hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
                 landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
+        
+        print_calibration_state(catch_calibrated, finish_calibrated, get_catch_calibration_delay(catch_calibrated, catch_calibration_time))
 
 
         # Print and display hip coordinates
@@ -97,19 +132,11 @@ while cap.isOpened():
         cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         
         if(not catch_calibrated):
-            calibrate_catch_or_finish(landmarks, True)
-        elif(not finish_calibrated):
+            catch_calibration_time = calibrate_catch_or_finish(landmarks, True)
+            is_delayed = get_catch_calibration_delay(catch_calibrated, catch_calibration_time)
+        elif(not finish_calibrated and not get_catch_calibration_delay(catch_calibrated, catch_calibration_time)):
             calibrate_catch_or_finish(landmarks, False)
-        
-        if(catch_calibrated):
-            cv2.putText(frame, f'CATCH CALIBRATED: {catch_x_position:.2f}', (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-        else:
-            cv2.putText(frame, 'CATCH NOT CALIBRATED', (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
-        if(finish_calibrated):
-            cv2.putText(frame, f'FINISH CALIBRATED: {finish_x_position:.2f}', (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-        else:
-            cv2.putText(frame, 'FINISH NOT CALIBRATED', (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         
     # Display the output
     cv2.imshow('Pose Detection', frame)
