@@ -45,7 +45,7 @@ def find_bad_angles(angles, phase):
             'elbow angle': (35, 60),
             'armpit angle': (80, 120),
             'hip angle': (110, 160),
-            'knee angle': (150, 175),
+            'knee angle': (140, 180),
             #'ankle angle': (145, 155)
         }
     else:
@@ -104,12 +104,10 @@ def detect_catch(checklist, knee_angle, shoulder, hip, wrist):
             checklist[0] = True
     elif checklist[1] is False:
         print("CATCH LOOKING FOR SHOULDERS")
-        print("shoulder: " , str(shoulder))
-        print("hip: " , str(hip))
         shoulder_in_front_of_hips = compare_pos(shoulder, hip)
         print(shoulder_in_front_of_hips)
         if shoulder_in_front_of_hips:
-            checklist[1] is True
+            checklist[1] = True
     elif checklist[2] is False:
         print("CATCH LOOKING FOR LEGS")
         legs_bent = check_leg_position(knee_angle, False)
@@ -175,32 +173,6 @@ def process_frame(frame, catch_range_max, finish_range_min, phase, checklist):
                 cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
                 )
         
-
-        is_wrist_in_front_of_knee = compare_pos(wrist, knee)
-       # if hip_x < catch_range_max and phase == 'recovery':
-        #    cv2.putText(frame, f'CATCH: {checklist}', 
-         #       (frame.shape[1] - 800, 100), 
-          #      cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
-           #     )
-            #phase = 'recovery'
-        #    if verify_checklist(checklist):
-         #       phase = 'catch'
-          #      bad_angles = find_bad_angles(angles, phase)
-           # else:
-            #    checklist = detect_catch(checklist, knee_angle, shoulder, hip, wrist)          
-  #      elif hip_x > finish_range_min and (phase == 'drive' or phase == 'stroke'):
-   #         cv2.putText(frame, 'Time to finish', 
-    #            (frame.shape[1] // 2 - 300, 150), 
-     #           cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
-      #          )
-       #     phase = 'drive'
-        #    # detect drive
-            
-  #          if verify_checklist(checklist):
-   ##             phase = 'finish'
-     #           bad_angles = find_bad_angles(angles, phase)
-      #      else:
-       #         checklist = detect_drive(checklist, knee_angle, shoulder, hip, wrist)
         if phase == 'drive': #hip_x <= finish_range_min and hip_x >= catch_range_max:
             cv2.putText(frame, 'DRIVE ;)', 
                 (frame.shape[1] // 2 - 300, 150), 
@@ -220,19 +192,9 @@ def process_frame(frame, catch_range_max, finish_range_min, phase, checklist):
                 phase = 'catch'
                 bad_angles = find_bad_angles(angles, phase)
             else:
-                checklist = detect_catch(checklist, knee_angle, shoulder, hip, wrist) 
-            return frame, phase, checklist
-        
+                checklist = detect_catch(checklist, knee_angle, shoulder, hip, wrist)
 
-        # Determine if you are out of catch or finish
-        if(phase == 'catch' and hip_x > catch_range_max):
-          phase = 'drive'
-          
-          checklist = [False, False, False]
-        elif(phase == 'finish' and compare_pos(wrist, hip)):
-          phase = 'recovery'
-          print("WAAAAAAAAAAA")
-          checklist = [False, False, False]
+            return frame, phase, checklist
         
         #Determine if posture is good or not
         if (phase == 'catch' or phase == 'finish'):
@@ -255,7 +217,14 @@ def process_frame(frame, catch_range_max, finish_range_min, phase, checklist):
                     )
                 y_offset += 70
     # if you are at the finish
-    # check if arms come over the hips then good to switch           
+    # check if arms come over the hips then good to switch
+    # Determine if you are out of catch or finish
+    if(phase == 'catch' and hip_x > catch_range_max + .05):
+      phase = 'drive'
+      checklist = [False, False, False]
+    elif(phase == 'finish' and compare_pos(wrist, hip)):
+      phase = 'recovery'
+      checklist = [False, False, False]           
 
     return frame, phase, checklist
 
