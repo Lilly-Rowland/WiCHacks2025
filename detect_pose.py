@@ -151,11 +151,12 @@ if __name__ == "__main__":
     finish_range_min = 0.7
     cap = cv2.VideoCapture(0)
 
+    calibrated = False
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
             break
-
+        
         frame = process_frame(frame, catch_range_max, finish_range_min)
         
         # Display the output
