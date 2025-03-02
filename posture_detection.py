@@ -29,20 +29,31 @@ def calculate_angle(a, b, c):
         
     return angle
 
-def find_bad_catch_angles(angles):
+def find_bad_angles(angles, phase):
     bad_angles = []
-    if angles['elbow angle'] > 180 or angles['elbow angle'] < 154: #elbow bad
-        bad_angles.append('elbow angle')
-    elif angles['armpit angle'] > 109 or angles['armpit angle'] < 70: #armpit bad
-        bad_angles.append('armpit angle')
-    elif angles['hip angle'] > 35 or angles['hip angle'] < 20:
-        bad_angles.append('hip angle')
-    elif angles['knee angle'] > 65 or angles['knee angle'] < 40:
-        bad_angles.append('knee angle')
-    elif angles['ankle angle'] > 185 or angles['ankle angle'] < 145:
-        bad_angles.append('ankle angle')
-    # elif angles['foot angle'] > 70 or angles['foot angle'] < 23:
-    #     bad_angles.append('foot angle')
+    if phase == 'catch':
+        angle_ranges = {
+            'elbow angle': (154, 180),
+            'armpit angle': (80, 109),
+            'hip angle': (23, 35),
+            'knee angle': (40, 65),
+            'ankle angle': (145, 185)
+        }
+    elif phase == 'finish':
+        angle_ranges = {
+            'elbow angle': (35, 55),
+            'armpit angle': (80, 120),
+            'hip angle': (130, 150),
+            'knee angle': (150, 175),
+            'ankle angle': (145, 155)
+        }
+    else:
+        return bad_angles
+
+    for angle_name, (min_angle, max_angle) in angle_ranges.items():
+        if angles[angle_name] < min_angle or angles[angle_name] > max_angle:
+            bad_angles.append(angle_name)
+    
     return bad_angles
 
 # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
@@ -94,43 +105,58 @@ while cap.isOpened():
 
         angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
  
-        y_offset = 100
-        for angle_name in angles:
-            angle = angles[angle_name]
-            cv2.putText(frame, f'{angle_name}_Angle: {angle:.2f} degrees', 
-                (50, y_offset), 
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
-                )
-            y_offset += 30
+        # y_offset = 150
+        # for angle_name in angles:
+        #     angle = angles[angle_name]
+        #     cv2.putText(frame, f'{angle_name}_Angle: {angle:.2f} degrees', 
+        #         (50, y_offset), 
+        #         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
+        #         )
+        #     y_offset += 30
 
 
         # Print and display hip coordinates
         hip_x, hip_y = hip
         cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', 
                 (50, 700), 
-                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
                 )
         
-   
+        if hip_x < .7:
+            cv2.putText(frame, 'Time to catch', 
+                (frame.shape[1] - 800, 100), 
+                cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
+                )
         # Set angle ranges for good catch
-        bad_angles = find_bad_catch_angles(angles)
+            bad_angles = find_bad_angles(angles, 'catch')
+        elif hip_x > .8:
+            cv2.putText(frame, 'Time to finish', 
+                (frame.shape[1] // 2 - 300, 150), 
+                cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
+                )
+        # Set angle ranges for good catch
+            bad_angles = find_bad_angles(angles, 'finish')
+
+
         if bad_angles == []:
             cv2.putText(frame, 'Good Posture', 
-                        (50, 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA
+                        (50, 100), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_AA
                         )
         else:
             cv2.putText(frame, 'Bad Posture', 
-                        (50, 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA
+                        (50, 100), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 225), 8, cv2.LINE_AA
                         )
-            y_offset2 = 800
+            y_offset = 200
             for angle_name in bad_angles:
                 cv2.putText(frame, f'{angle_name} INCORRECT', 
-                    (50, y_offset2), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA
+                    (50, y_offset), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 225), 4, cv2.LINE_AA
                     )
-                y_offset2 += 30
+                y_offset += 70
+
+    
     # Display the output
     cv2.imshow('Pose Detection', frame)
 

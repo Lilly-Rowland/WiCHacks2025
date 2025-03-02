@@ -68,7 +68,7 @@ def check_feet(feet_angle):
   if feet_angle >= 30 and feet_angle <= 40:
     cv2.putText(frame, f'Good feet angle, {feet_angle:.2f} degrees', (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
   else:
-     cv2.putText(frame, f'Bad feet angle, {feet_angle:.2f} degrees', (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+     cv2.putText(frame,  f'Bad feet angle, {feet_angle:.2f} degrees', (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
 
 
