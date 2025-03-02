@@ -43,7 +43,7 @@ def calibrate_catch_or_finish(frame, landmarks, isCatch, calibration_start_time,
     if calibration_start_time is not None:
         cv2.putText(frame, f'{(time.time() - calibration_start_time):.2f}', (550, 400), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
     else:
-        cv2.putText(frame, f'TIME: 0.0', (550, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(frame, f'0.0', (550, 400), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
     if abs(hip_x - previous_hip_x) < difference_threshold:
         if calibration_start_time is None:
             calibration_start_time = time.time()
@@ -83,13 +83,6 @@ def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibr
         )
 
         landmarks = results.pose_landmarks.landmark
-
-        hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
-               landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
-
-        # Print and display hip coordinates
-        hip_x, hip_y = hip
-        cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         
         if not catch_calibrated:
             catch_calibrated, catch_x_position, _, calibration_start_time, previous_hip_x = calibrate_catch_or_finish(frame, landmarks, True, calibration_start_time, previous_hip_x)
@@ -97,7 +90,6 @@ def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibr
                 completed_calibration_time = time.time()
                 message = "CATCH CALIBRATED"
                 calibration_start_time = None
-       # elif abs(hip_x - catch_x_position) > 0.02 and not finish_calibrated and is_calibration_delayed(completed_calibration_time):
         elif not finish_calibrated and not is_calibration_delayed(completed_calibration_time):
             message = "SIT AT THE FINISH"
             finish_calibrated, _, finish_x_position, calibration_start_time, previous_hip_x = calibrate_catch_or_finish(frame, landmarks, False, calibration_start_time, previous_hip_x)
@@ -146,8 +138,8 @@ def main():
         success, frame = cap.read()
         if not success:
             break
-        #print(message)
 
+        # CALIBRATES ROWER AND BEGINS ROWING SEQUENCE
         frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message = seat_calibration(
             frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, completed_calibration_time, message
         )
