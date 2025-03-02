@@ -45,6 +45,14 @@ def find_bad_catch_angles(angles):
     #     bad_angles.append('foot angle')
     return bad_angles
 
+def compare_pos(l1, l2):
+    if l1[0] > l2[0]:
+        return  " is in front of " 
+    elif l1[0] < l2[0]:
+        return " is behind " 
+    else:
+        return " is in the same positon as "
+
 # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
 cap = cv2.VideoCapture(0)
 
@@ -91,6 +99,13 @@ while cap.isOpened():
         knee_angle = calculate_angle(hip, knee, ankle)
         ankle_angle = calculate_angle(knee, ankle, heel)
         foot_angle = calculate_angle(ankle, heel, toe)
+
+        part = ["shoulder", "elbow", "wrist", "hip", "knee", "ankle", "heel", "toe"]
+
+        for p in range(len(part) - 1):
+            for a in range(p+1, len(part)):
+                pos = compare_pos(part[p], part[a])
+                print(part[p] + pos + part[a])
 
         angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
  
