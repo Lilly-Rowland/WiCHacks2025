@@ -1,4 +1,4 @@
-# WiCHacks2025
+# WiCHacks2025: MyErgBuddy
 
 ## Authors
 **Claire O’Farrel, Lilly Rowland, Aparnaa Senthilnathan**
@@ -10,7 +10,7 @@
 Proper rowing form is essential for efficiency and injury prevention, but expert coaching isn't always accessible. We wanted to create a tool that provides real-time feedback, helping users refine their technique.
 
 ## What it does
-MyErgBuddy uses computer vision to analyze a rower’s posture, tracking joint angles and key landmarks to assess form. It provides real-time corrections and insights, notifying users when their form is incorrect and how to fix it.
+MyErgBuddy uses computer vision to analyze a rower’s posture, tracking joint angles and key landmarks to assess form. It provides real-time corrections and insights, notifying users when their form is incorrect and how to fix it.s
 
 ## How we built it
 We used a pose estimation model to detect key body landmarks, applying machine learning algorithms to evaluate form accuracy. The system runs on a user-friendly application for accessibility. It measures joint angles and horizontal positions to determine correct posture during different rowing phases. Additionally, it calibrates based on the user's height and erg position, ensuring usability for individuals of all sizes and any erg setup.
