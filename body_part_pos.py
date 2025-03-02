@@ -84,6 +84,9 @@ def posture_detection(catch_range_max, finish_range_min):
     # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
     cap = cv2.VideoCapture(0)
 
+    #Init parts
+    part = []
+
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
@@ -94,6 +97,7 @@ def posture_detection(catch_range_max, finish_range_min):
 
         # Process the frame with Pose Landmarker
         results = pose.process(image_rgb)
+        
 
         if results.pose_landmarks:
             # Draw landmarks on the frame
@@ -130,31 +134,36 @@ def posture_detection(catch_range_max, finish_range_min):
 
             # part = ["shoulder", "elbow", "wrist", "hip", "knee", "ankle", "heel", "toe"]
             part = [("hip", hip), ("shoulder", shoulder), ("wrist", wrist), ("knee", knee)]
+            pos = compare_pos(wrist, hip)
+            print(pos)
 
-        # compare the landmarks' positions for hips, shouders, wrists, and knees
-        cnt = 0
-        score = []
-        for p in range(len(part) - 1):
-            for a in range(p+1, len(part)):
-                pos = compare_pos(part[p][1], part[a][1])
-                if pos == " is in front of ":
-                    score.append(1)
-                else:
-                    score.append(0)
-                cnt += 1
+            # compare the landmarks' positions for hips, shouders, wrists, and knees
+            cnt = 0
+            score = []
+            for p in range(len(part) - 1):
+                for a in range(p+1, len(part)):
+                    pos = compare_pos(part[p][1], part[a][1])
+                    if pos == " is in front of ":
+                        score.append(1)
+                    else:
+                        score.append(0)
+                    cnt += 1
 
-        # checks if the recorded posture is in the starting or finishing position and prints it on the video
-        if is_start(score):
-            cv2.putText(frame, "Correct Start Posture", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-        else:
-            cv2.putText(frame, "Incorrect Start Posture", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-        
-        if is_end(score):
-            cv2.putText(frame, "Correct End Posture", (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-        else:
-            cv2.putText(frame, "Incorrect End Posture", (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-
-        angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
+            # checks if the recorded posture is in the starting or finishing position and prints it on the video
+            if is_start(score):
+                #cv2.putText(frame, "Correct Start Posture", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+                pass
+            else:
+                #cv2.putText(frame, "Incorrect Start Posture", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+                pass
+            
+            if is_end(score):
+                #cv2.putText(frame, "Correct End Posture", (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+                pass
+            else:
+                #cv2.putText(frame, "Incorrect End Posture", (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+                pass
+            angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
         
         # Display the output
         cv2.imshow('Pose Detection', frame)
