@@ -168,25 +168,44 @@ def process_frame(frame, catch_range_max, finish_range_min, phase, checklist):
         
         # Print and display hip coordinates
         hip_x, hip_y = hip
-        cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', 
-                (50, 700), 
-                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
-                )
         
         if phase == 'drive': #hip_x <= finish_range_min and hip_x >= catch_range_max:
-            cv2.putText(frame, 'DRIVE ;)', 
-                (frame.shape[1] // 2 - 300, 150), 
-                cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
+            if checklist[0] is False:
+                cv2.putText(frame, 'Drive with your legs!', 
+                (frame.shape[1] // 2 - 500, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA, False
                 )
+            elif checklist[1] is False:
+                cv2.putText(frame, 'Bring your shoulders back!', 
+                (frame.shape[1] // 2 - 500, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA, False
+                )
+            elif checklist[2] is False:
+                cv2.putText(frame, 'Bring your arms back!', 
+                (frame.shape[1] // 2 - 500, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA, False
+                )
+            
             if verify_checklist(checklist):
                 phase = 'finish'
                 bad_angles = find_bad_angles(angles, phase)
             else:
                 checklist = detect_drive(checklist, knee_angle, shoulder, hip, wrist)
         elif phase == "recovery":
-            cv2.putText(frame, 'RECOVERY ;)', 
-                (frame.shape[1] // 2 - 300, 150), 
-                cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
+            if checklist[0] is False:
+                cv2.putText(frame, 'Bring your arms forward!', 
+                (frame.shape[1] // 2 - 500, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA, False
+                )
+            elif checklist[1] is False:
+                cv2.putText(frame, 'Bring your shoulders forward!', 
+                (frame.shape[1] // 2 - 500, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA, False
+                )
+            elif checklist[2] is False:
+                cv2.putText(frame, 'Bring your legs forward!', 
+                (frame.shape[1] // 2 - 500, 700), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA, False
                 )
             if verify_checklist(checklist):
                 phase = 'catch'
@@ -200,12 +219,12 @@ def process_frame(frame, catch_range_max, finish_range_min, phase, checklist):
         if (phase == 'catch' or phase == 'finish'):
           bad_angles = find_bad_angles(angles, phase)
         if (phase == 'catch' or phase == 'finish') and bad_angles == []:
-            cv2.putText(frame, 'Good Posture', 
+            cv2.putText(frame, 'Good Form', 
                         (50, 100), 
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_AA
                         )
         elif (phase == 'catch' or phase == 'finish'):
-            cv2.putText(frame, 'Bad Posture', 
+            cv2.putText(frame, 'Bad Form', 
                         (50, 100), 
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 225), 8, cv2.LINE_AA
                         )
