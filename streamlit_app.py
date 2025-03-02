@@ -113,8 +113,12 @@ def main():
         st.write(f"- {tip}")
 
     if st.button("Learn How to Row", key="learn_button"):
-        st.write("This is a placeholder button where we can implement a follow along tutorial for how to row.")
-    st.stop()
+        st.write("1. Start with your arms straight, your back straight and upright, and knees and angles flexed so that your shins are vertical")
+        st.write("2. As you drive, push with your legs, keep your body forward, and extend your arms")
+        st.write("3. Your finishing posture should be your legs straight, the handlebar is on your chest, and your shoulder blades squeezed")
+        st.write("4. As you recover (go back to starting position), extend your arms, hinge your hips forward to bring the torso over your legs, and bend your knees")
+        st.write("5. Repeat steps 1-4")
 
+    
 if __name__ == "__main__":
     main()
