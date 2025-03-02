@@ -57,6 +57,12 @@ def find_bad_angles(angles, phase):
     
     return bad_angles
 
+def compare_pos(l1, l2):
+    if l1 <= l2:
+        True
+    elif l1 > l2:
+        False 
+
 def process_frame(frame, catch_range_max, finish_range_min):
     # Convert BGR to RGB (MediaPipe requires RGB format)
     image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -105,15 +111,16 @@ def process_frame(frame, catch_range_max, finish_range_min):
                 (50, 700), 
                 cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
                 )
-        
-        if hip_x < catch_range_max:
+        is_wrist_in_front_of_knee = compare_pos(wrist, knee)
+
+        if is_wrist_in_front_of_knee and hip_x < catch_range_max:
             cv2.putText(frame, 'Time to catch', 
                 (frame.shape[1] - 800, 100), 
                 cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
                 )
             # Set angle ranges for good catch
             bad_angles = find_bad_angles(angles, 'catch')
-        elif hip_x > finish_range_min:
+        elif not is_wrist_in_front_of_knee and hip_x > finish_range_min:
             cv2.putText(frame, 'Time to finish', 
                 (frame.shape[1] // 2 - 300, 150), 
                 cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
@@ -155,6 +162,7 @@ if __name__ == "__main__":
     finish_calibrated = False
     catch_x_position = None
     finish_x_position = None
+    catch_calibration_time = None
     # catch_range_max = 0.6
     # finish_range_min = 0.7
     cap = cv2.VideoCapture(0)
@@ -166,11 +174,12 @@ if __name__ == "__main__":
             break
         
         if not (catch_calibrated and finish_calibrated):
-            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position = seat_calibration(
-            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position
-        )
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time = seat_calibration(
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time
+            )
         else:
-            frame = process_frame(frame, catch_x_position, finish_x_position)
+            stroke_length = finish_x_position - catch_x_position
+            frame = process_frame(frame, (catch_x_position + stroke_length*.1), (finish_x_position-stroke_length*.1))
         
         # Display the output
         cv2.imshow('Pose Detection', frame)

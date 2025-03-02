@@ -30,14 +30,17 @@ def calculate_angle(a, b, c):
         
     return angle
 
-def calibrate_catch_or_finish(landmarks, isCatch, calibration_start_time, previous_hip_x):
+def calibrate_catch_or_finish(frame, landmarks, isCatch, calibration_start_time, previous_hip_x):
     hip_x = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x
     
     if previous_hip_x is None:
         previous_hip_x = hip_x
 
     difference_threshold = 0.02
-
+    if calibration_start_time is not None:
+        cv2.putText(frame, f'{(time.time() - calibration_start_time):.2f}', (550, 400), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
+    else:
+        cv2.putText(frame, f'TIME: 0.0', (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
     if abs(hip_x - previous_hip_x) < difference_threshold:
         if calibration_start_time is None:
             calibration_start_time = time.time()
@@ -52,7 +55,26 @@ def calibrate_catch_or_finish(landmarks, isCatch, calibration_start_time, previo
     previous_hip_x = hip_x
     return False, None, None, calibration_start_time, previous_hip_x
 
-def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position):
+def print_calibration_state(frame, catch_calibrated, finish_calibrated, is_delayed):
+    cv2.putText(frame, 'CALIBRATION IN PROCESS', (250, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3, cv2.LINE_AA)
+    if catch_calibrated and is_delayed:
+        cv2.putText(frame, 'CATCH CALIBRATED', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
+    elif not catch_calibrated:
+        cv2.putText(frame, 'SIT AT CATCH', (425, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3, cv2.LINE_AA)
+    elif catch_calibrated and not is_delayed and not finish_calibrated:
+        cv2.putText(frame, 'SIT AT FINISH', (425, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3, cv2.LINE_AA)
+    elif finish_calibrated:
+        cv2.putText(frame, 'FINISH CALIBRATED', (375, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, cv2.LINE_AA)
+
+def get_catch_calibration_delay(catch_calibrated, catch_calibration_time):
+    # calculate a 3 second delay after catch_calibrated is set to true
+    if catch_calibrated:
+        if catch_calibration_time is not None and (time.time() - catch_calibration_time) >= 3:
+            return False
+        return True
+    return False
+
+def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time):
     # Convert BGR to RGB (MediaPipe requires RGB format)
     image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -75,21 +97,16 @@ def seat_calibration(frame, calibration_start_time, previous_hip_x, catch_calibr
         cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         
         if not catch_calibrated:
-            catch_calibrated, catch_x_position, _, calibration_start_time, previous_hip_x = calibrate_catch_or_finish(landmarks, True, calibration_start_time, previous_hip_x)
-        elif abs(hip_x - catch_x_position) > 0.02 and not finish_calibrated:
-            finish_calibrated, _, finish_x_position, calibration_start_time, previous_hip_x = calibrate_catch_or_finish(landmarks, False, calibration_start_time, previous_hip_x)
+            catch_calibrated, catch_x_position, _, calibration_start_time, previous_hip_x = calibrate_catch_or_finish(frame, landmarks, True, calibration_start_time, previous_hip_x)
+            if catch_calibrated:
+                catch_calibration_time = time.time()
+        elif abs(hip_x - catch_x_position) > 0.02 and not finish_calibrated and not get_catch_calibration_delay(catch_calibrated, catch_calibration_time):
+            finish_calibrated, _, finish_x_position, calibration_start_time, previous_hip_x = calibrate_catch_or_finish(frame, landmarks, False, calibration_start_time, previous_hip_x)
         
-        if catch_calibrated:
-            cv2.putText(frame, f'CATCH CALIBRATED: {catch_x_position:.2f}', (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-        else:
-            cv2.putText(frame, 'CATCH NOT CALIBRATED', (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-
-        if finish_calibrated:
-            cv2.putText(frame, f'FINISH CALIBRATED: {finish_x_position:.2f}', (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-        else:
-            cv2.putText(frame, 'FINISH NOT CALIBRATED', (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+        is_delayed = get_catch_calibration_delay(catch_calibrated, catch_calibration_time)
+        print_calibration_state(frame, catch_calibrated, finish_calibrated, is_delayed)
     
-    return frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position
+    return frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time
 
 def main():
     calibration_start_time = None
@@ -98,17 +115,24 @@ def main():
     finish_calibrated = False
     catch_x_position = None
     finish_x_position = None
+    catch_calibration_time = None
 
     # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
     cap = cv2.VideoCapture(0)
+
+    # Force the webcam to use a higher resolution (change values as needed)
+    cam_width = 1280  # Try 1920 for Full HD
+    cam_height = 720   # Try 1080 for Full HD
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_height)
 
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
             break
 
-        frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position = seat_calibration(
-            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position
+        frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time = seat_calibration(
+            frame, calibration_start_time, previous_hip_x, catch_calibrated, finish_calibrated, catch_x_position, finish_x_position, catch_calibration_time
         )
         
         # Display the output
