@@ -56,114 +56,110 @@ def find_bad_angles(angles, phase):
     
     return bad_angles
 
-# Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
-cap = cv2.VideoCapture(0)
+def posture_detection(catch_range_max, finish_range_min):
+    # Open video capture (0 for webcam, or replace with 'video.mp4' for file input)
+    cap = cv2.VideoCapture(0)
 
-while cap.isOpened():
-    success, frame = cap.read()
-    if not success:
-        break
+    while cap.isOpened():
+        success, frame = cap.read()
+        if not success:
+            break
 
-    # Convert BGR to RGB (MediaPipe requires RGB format)
-    image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Convert BGR to RGB (MediaPipe requires RGB format)
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Process the frame with Pose Landmarker
-    results = pose.process(image_rgb)
+        # Process the frame with Pose Landmarker
+        results = pose.process(image_rgb)
 
-    if results.pose_landmarks:
-        # Draw landmarks on the frame
-        mp_drawing.draw_landmarks(
-            frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS
-        )
+        if results.pose_landmarks:
+            # Draw landmarks on the frame
+            mp_drawing.draw_landmarks(
+                frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS
+            )
 
-        landmarks = results.pose_landmarks.landmark
+            landmarks = results.pose_landmarks.landmark
 
-        shoulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
-                    landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
-        elbow = [landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,
-                 landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y]
-        wrist = [landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
-                 landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y]
-        hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
-                landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
-        knee = [landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].x,
-                 landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].y]
-        ankle = [landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].x,
-                 landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].y]
-        heel = [landmarks[mp_pose.PoseLandmark.LEFT_HEEL.value].x,
-                 landmarks[mp_pose.PoseLandmark.LEFT_HEEL.value].y]
-        toe = [landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value].x,
-                 landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value].y]
-        
+            shoulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
+                        landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
+            elbow = [landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,
+                     landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y]
+            wrist = [landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
+                     landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y]
+            hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
+                    landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
+            knee = [landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].x,
+                     landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].y]
+            ankle = [landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].x,
+                     landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].y]
+            heel = [landmarks[mp_pose.PoseLandmark.LEFT_HEEL.value].x,
+                     landmarks[mp_pose.PoseLandmark.LEFT_HEEL.value].y]
+            toe = [landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value].x,
+                     landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value].y]
+            
 
-        elbow_angle = calculate_angle(shoulder, elbow, wrist)
-        armpit_angle = calculate_angle(shoulder, elbow, hip)
-        hip_angle = calculate_angle(knee, hip, shoulder)
-        knee_angle = calculate_angle(hip, knee, ankle)
-        ankle_angle = calculate_angle(knee, ankle, heel)
-        foot_angle = calculate_angle(ankle, heel, toe)
+            elbow_angle = calculate_angle(shoulder, elbow, wrist)
+            armpit_angle = calculate_angle(shoulder, elbow, hip)
+            hip_angle = calculate_angle(knee, hip, shoulder)
+            knee_angle = calculate_angle(hip, knee, ankle)
+            ankle_angle = calculate_angle(knee, ankle, heel)
+            foot_angle = calculate_angle(ankle, heel, toe)
 
-        angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
- 
-        # y_offset = 150
-        # for angle_name in angles:
-        #     angle = angles[angle_name]
-        #     cv2.putText(frame, f'{angle_name}_Angle: {angle:.2f} degrees', 
-        #         (50, y_offset), 
-        #         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA
-        #         )
-        #     y_offset += 30
-
-
-        # Print and display hip coordinates
-        hip_x, hip_y = hip
-        cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', 
-                (50, 700), 
-                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
-                )
-        
-        if hip_x < .7:
-            cv2.putText(frame, 'Time to catch', 
-                (frame.shape[1] - 800, 100), 
-                cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
-                )
-        # Set angle ranges for good catch
-            bad_angles = find_bad_angles(angles, 'catch')
-        elif hip_x > .8:
-            cv2.putText(frame, 'Time to finish', 
-                (frame.shape[1] // 2 - 300, 150), 
-                cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
-                )
-        # Set angle ranges for good catch
-            bad_angles = find_bad_angles(angles, 'finish')
-
-
-        if bad_angles == []:
-            cv2.putText(frame, 'Good Posture', 
-                        (50, 100), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_AA
-                        )
-        else:
-            cv2.putText(frame, 'Bad Posture', 
-                        (50, 100), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 225), 8, cv2.LINE_AA
-                        )
-            y_offset = 200
-            for angle_name in bad_angles:
-                cv2.putText(frame, f'{angle_name} INCORRECT', 
-                    (50, y_offset), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 225), 4, cv2.LINE_AA
-                    )
-                y_offset += 70
-
+            angles = {"elbow angle": elbow_angle, "armpit angle": armpit_angle, "hip angle": hip_angle, "knee angle": knee_angle, "ankle angle": ankle_angle, "foot angle": foot_angle}
     
-    # Display the output
-    cv2.imshow('Pose Detection', frame)
+            # Print and display hip coordinates
+            hip_x, hip_y = hip
+            cv2.putText(frame, f'Hip: x={hip_x:.2f}, y={hip_y:.2f}', 
+                    (50, 700), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3, cv2.LINE_AA
+                    )
+            
+            if hip_x > catch_range_max:
+                cv2.putText(frame, 'Time to catch', 
+                    (frame.shape[1] - 800, 100), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 6, cv2.LINE_AA, False
+                    )
+                # Set angle ranges for good catch
+                bad_angles = find_bad_angles(angles, 'catch')
+            elif hip_x > finish_range_min:
+                cv2.putText(frame, 'Time to finish', 
+                    (frame.shape[1] // 2 - 300, 150), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 8, cv2.LINE_AA, False
+                    )
+                # Set angle ranges for good catch
+                bad_angles = find_bad_angles(angles, 'finish')
 
-    # Press 'q' to exit
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
-# Release resources
-cap.release()
-cv2.destroyAllWindows()
+            if bad_angles == []:
+                cv2.putText(frame, 'Good Posture', 
+                            (50, 100), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_AA
+                            )
+            else:
+                cv2.putText(frame, 'Bad Posture', 
+                            (50, 100), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 225), 8, cv2.LINE_AA
+                            )
+                y_offset = 200
+                for angle_name in bad_angles:
+                    cv2.putText(frame, f'{angle_name} INCORRECT', 
+                        (50, y_offset), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 225), 4, cv2.LINE_AA
+                        )
+                    y_offset += 70
+
+        
+        # Display the output
+        cv2.imshow('Pose Detection', frame)
+
+        # Press 'q' to exit
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # Release resources
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    catch_range_max = 0.6
+    finish_range_min = 0.8
+    posture_detection(catch_range_max, finish_range_min)
