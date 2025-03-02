@@ -6,14 +6,14 @@ from detect_pose import process_frame
 from seat_calibration2 import seat_calibration
 
 def main():
-    st.title("Welcome to My Erg Buddy")
+    st.title("Welcome to MyErgBuddy")
     st.header("Purpose")
     st.write("""
     Our app uses computer vision to track joint angles and key landmarks, providing real-time 
              feedback to improve rowing form, boost efficiency, and reduce injury risk—expert 
              coaching anytime, anywhere.
     """)
-
+    rowing_tracked = False
     if "calibration_started" not in st.session_state:
         st.session_state.calibration_started = False
 
@@ -61,18 +61,59 @@ def main():
 
             # Exit if 'Stop' button is pressed
             if stop_button:
+                rowing_tracked = True
                 st.session_state.calibration_started = False
                 break
 
         cap.release()
         cv2.destroyAllWindows()
+
+    st.header("Form Summary")
+    if not rowing_tracked:
+        st.write("Please complete calibration and row to get your feedback.")
+    else: 
+        st.write("Here is your form summary:")
+        st.write("Placeholder for form summary")
+        # Placeholder for form summary
+        percent_correct_catch = 85  # Example value, replace with actual calculation
+        percent_correct_finish = 90  # Example value, replace with actual calculation
+        
+        # Placeholder for common mistakes, will be specified from summary report
+        common_mistakes = ["Leaning too far back at the finish", "Not engaging core properly", "Incorrect hand positioning"]
+
+        st.write(f"Percent Correct Catch: {percent_correct_catch}%")
+        st.write(f"Percent Correct Finish: {percent_correct_finish}%")
+        st.write("Most Common Mistakes:")
+        for mistake in common_mistakes:
+            st.write(f"- {mistake}")
         
 
     st.header("What is the correct form?")
     st.write("""
-    This application uses computer vision to detect your posture during rowing. It provides real-time feedback to help you maintain proper form and avoid injury.
-    The calibration process ensures that the application accurately detects your catch and finish positions. Once calibrated, the application will guide you through your rowing session, providing feedback on your posture at each phase of the stroke.
+    Don't know where to start? Here are some tips and images to help you get started with the correct form:
     """)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.image("data/catch.jpg", caption="Catch Position")
+
+    with col2:
+        st.image("data/finish.jpg", caption="Finish Position")
+
+    st.header("Helpful Rowing Tips")
+    tips = [
+        "Maintain a straight back throughout the stroke.",
+        "Engage your core to support your lower back.",
+        "Drive with your legs first, then lean back and pull with your arms.",
+        "Keep your grip relaxed to avoid unnecessary tension.",
+        "Ensure smooth and controlled movements to maximize efficiency.",
+        "Focus on consistent breathing patterns."
+    ]
+    for tip in tips:
+        st.write(f"- {tip}")
+
+    if st.button("Learn How to Row", key="learn_button"):
+        st.write("This is a placeholder button where we can implement a follow along tutorial for how to row.")
     st.stop()
 
 if __name__ == "__main__":
